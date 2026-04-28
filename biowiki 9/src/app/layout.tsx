@@ -1,7 +1,11 @@
 import type { Metadata } from 'next'
-import { GeistSans } from 'geist/font/sans'
-import { GeistMono } from 'geist/font/mono'
+import { Inter } from 'next/font/google'
 import '@/styles/globals.css'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-geist-sans',
+})
 
 export const metadata: Metadata = {
   title: {
@@ -24,7 +28,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} dark`}
+      className={`${inter.variable} dark`}
       suppressHydrationWarning
     >
       <body className="min-h-screen bg-[var(--color-bg)] font-sans antialiased">
