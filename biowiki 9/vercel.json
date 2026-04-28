@@ -4,19 +4,5 @@
       "path": "/api/cron/refresh",
       "schedule": "0 6 * * 1"
     }
-  ],
-  "functions": {
-    "src/app/api/pipeline/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/cron/refresh/route.ts": {
-      "maxDuration": 300
-    },
-    "src/app/api/chat/route.ts": {
-      "maxDuration": 60
-    },
-    "src/app/api/embed/route.ts": {
-      "maxDuration": 120
-    }
-  }
+  ]
 }
