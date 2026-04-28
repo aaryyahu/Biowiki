@@ -1,146 +1,185 @@
-import Link from 'next/link'
-import { Nav } from '@/components/layout/Nav'
-import { ArticleCard } from '@/components/article/ArticleCard'
-import { createClient } from '@/lib/supabase/server'
-import { CATEGORY_LABELS, type ArticleCategory } from '@/types'
+import { notFound }        from 'next/navigation'
+import type { Metadata }   from 'next'
+import Script              from 'next/script'
+import { Nav }             from '@/components/layout/Nav'
+import { CategoryBadge }   from '@/components/ui/CategoryBadge'
+import { EvidenceScores }  from '@/components/article/EvidenceScores'
+import { TransparencyPanel } from '@/components/article/TransparencyPanel'
+import { createClient }    from '@/lib/supabase/server'
+import { formatDate }      from '@/lib/utils'
 
-const CATEGORIES: { key: ArticleCategory; emoji: string; desc: string }[] = [
-  { key: 'nootropics',      emoji: '🧠', desc: 'Cognitive enhancers & smart drugs' },
-  { key: 'longevity',       emoji: '⏳', desc: 'Lifespan & healthspan extension' },
-  { key: 'protocols',       emoji: '📋', desc: 'Evidence-based health protocols' },
-  { key: 'quantified-self', emoji: '📈', desc: 'Tracking, wearables & data' },
-  { key: 'microbiome',      emoji: '🦠', desc: 'Gut health & microbiota' },
-  { key: 'genetics',        emoji: '🧬', desc: 'Genetic optimization & testing' },
-]
-
-async function getStats() {
-  const supabase = createClient()
-  const [articles, papers, runs] = await Promise.all([
-    supabase.from('articles').select('id', { count: 'exact', head: true }).eq('status', 'published'),
-    supabase.from('papers').select('id', { count: 'exact', head: true }),
-    supabase.from('pipeline_runs').select('completed_at').eq('status', 'completed').order('completed_at', { ascending: false }).limit(1),
-  ])
-  return {
-    articleCount: articles.count ?? 0,
-    paperCount: papers.count ?? 0,
-    lastRun: runs.data?.[0]?.completed_at ?? null,
-  }
+interface PageProps {
+  params: { slug: string }
 }
 
-async function getRecentArticles() {
+async function getArticle(slug: string) {
   const supabase = createClient()
   const { data } = await supabase
     .from('articles')
     .select('*')
+    .eq('slug', slug)
     .eq('status', 'published')
-    .order('updated_at', { ascending: false })
-    .limit(6)
+    .single()
+  return data
+}
+
+async function getEvidenceScores(articleId: string) {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('evidence_scores')
+    .select('*')
+    .eq('article_id', articleId)
+    .order('score', { ascending: false })
   return data ?? []
 }
 
-export default async function HomePage() {
-  const [stats, recentArticles] = await Promise.all([getStats(), getRecentArticles()])
+async function getPapers(topic: string) {
+  const supabase = createClient()
+  const { data } = await supabase
+    .from('papers')
+    .select('id, title, authors, journal, published_year, doi')
+    .eq('topic', topic)
+    .order('citation_count', { ascending: false })
+    .limit(20)
+  return data ?? []
+}
+
+export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
+  const article = await getArticle(params.slug)
+  if (!article) return { title: 'Not found' }
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
+
+  return {
+    title:       article.title,
+    description: article.summary,
+    openGraph: {
+      title:         article.title,
+      description:   article.summary,
+      url:           `${appUrl}/articles/${article.slug}`,
+      type:          'article',
+      publishedTime: article.created_at,
+      modifiedTime:  article.updated_at,
+    },
+    alternates: {
+      canonical: `${appUrl}/articles/${article.slug}`,
+    },
+  }
+}
+
+export default async function ArticlePage({ params }: PageProps) {
+  const article = await getArticle(params.slug)
+  if (!article) notFound()
+
+  const [scores, papers] = await Promise.all([
+    getEvidenceScores(article.id),
+    getPapers(article.topic),
+  ])
+
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
+
+  const jsonLd = {
+    '@context': 'https://schema.org',
+    '@type':    'MedicalWebPage',
+    name:       article.title,
+    description: article.summary,
+    url:         `${appUrl}/articles/${article.slug}`,
+    datePublished: article.created_at,
+    dateModified:  article.updated_at,
+    publisher: {
+      '@type': 'Organization',
+      name:    'BioWiki',
+      url:     appUrl,
+    },
+  }
 
   return (
     <div className="min-h-screen">
+      <Script
+        id="article-jsonld"
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <Nav />
+      <main className="mx-auto max-w-6xl px-4 py-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
 
-      {/* Hero */}
-      <section className="relative overflow-hidden border-b" style={{ borderColor: 'var(--color-border)' }}>
-        <div className="absolute inset-0 grid-bg opacity-60" />
-        <div className="absolute inset-0" style={{
-          background: 'radial-gradient(ellipse 60% 50% at 50% -10%, rgba(29,158,117,0.12), transparent)'
-        }} />
-        <div className="relative mx-auto max-w-6xl px-4 py-20 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs mb-6"
-            style={{ borderColor: 'rgba(29,158,117,0.3)', color: 'var(--color-text-secondary)', background: 'rgba(29,158,117,0.05)' }}>
-            <span className="h-1.5 w-1.5 rounded-full bg-bio-400 animate-pulse" />
-            Updated continuously from peer-reviewed research
-          </div>
-
-          <h1 className="text-5xl font-bold tracking-tight mb-4" style={{ color: 'var(--color-text-primary)' }}>
-            The AI-powered<br />
-            <span className="text-bio-400">biohacking</span> knowledge base
-          </h1>
-
-          <p className="mx-auto max-w-xl text-lg leading-relaxed mb-8" style={{ color: 'var(--color-text-secondary)' }}>
-            Every article synthesized from peer-reviewed papers by Claude AI.
-            Evidence-graded, citation-backed, and continuously refreshed as new research is published.
-          </p>
-
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Link href="/articles" className="btn-primary px-6 py-2.5 text-sm">
-              Browse articles
-            </Link>
-            <Link href="/ask" className="btn-secondary px-6 py-2.5 text-sm">
-              Ask the wiki
-            </Link>
-          </div>
-
-          {/* Stats */}
-          <div className="mt-14 flex items-center justify-center gap-8 flex-wrap">
-            {[
-              { value: stats.articleCount.toLocaleString(), label: 'Articles generated' },
-              { value: stats.paperCount.toLocaleString(),   label: 'Papers indexed' },
-              { value: 'Claude',                            label: 'Synthesis model' },
-            ].map(({ value, label }) => (
-              <div key={label} className="text-center">
-                <div className="text-2xl font-bold text-bio-400">{value}</div>
-                <div className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{label}</div>
+          <article>
+            <header className="mb-8">
+              <CategoryBadge category={article.category} className="mb-4" />
+              <h1 className="text-3xl font-bold tracking-tight mb-3" style={{ color: 'var(--color-text-primary)' }}>
+                {article.title}
+              </h1>
+              <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                {article.summary}
+              </p>
+              <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                <span>Updated {formatDate(article.updated_at)}</span>
+                <span>·</span>
+                <span>{article.papers_count} source papers</span>
+                <span>·</span>
+                <span>AI-generated</span>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
+            </header>
 
-      {/* Categories */}
-      <section className="mx-auto max-w-6xl px-4 py-12">
-        <h2 className="text-lg font-semibold mb-6" style={{ color: 'var(--color-text-primary)' }}>
-          Browse by category
-        </h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-          {CATEGORIES.map(({ key, emoji, desc }) => (
-            <Link
-              key={key}
-              href={`/articles?category=${key}`}
-              className="card group flex items-start gap-3 p-4 transition-all duration-200 hover:-translate-y-0.5"
-            >
-              <span className="text-xl shrink-0">{emoji}</span>
-              <div>
-                <div className="text-sm font-medium group-hover:text-bio-400 transition-colors"
-                  style={{ color: 'var(--color-text-primary)' }}>
-                  {CATEGORY_LABELS[key]}
-                </div>
-                <div className="text-xs mt-0.5" style={{ color: 'var(--color-text-muted)' }}>{desc}</div>
+            <div
+              className="article-content"
+              dangerouslySetInnerHTML={{ __html: article.content }}
+            />
+
+            {papers.length > 0 && (
+              <section className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                  References
+                </h2>
+                <ol className="space-y-3">
+                  {papers.map((paper, i) => (
+                    <li key={paper.id} className="flex gap-3 text-sm">
+                      <span className="shrink-0 font-mono text-bio-400 text-xs mt-0.5">[{i + 1}]</span>
+                      <div>
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{paper.title}.</span>
+                        {paper.authors?.length > 0 && (
+                          <span style={{ color: 'var(--color-text-muted)' }}>
+                            {' '}{paper.authors.slice(0, 3).join(', ')}{paper.authors.length > 3 ? ' et al.' : ''}.
+                          </span>
+                        )}
+                        {paper.journal && (
+                          <span style={{ color: 'var(--color-text-muted)' }}> {paper.journal}.</span>
+                        )}
+                        {paper.published_year && (
+                          <span style={{ color: 'var(--color-text-muted)' }}> {paper.published_year}.</span>
+                        )}
+                        {paper.doi && (
+                          <a
+                            href={`https://doi.org/${paper.doi}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 text-bio-400 hover:text-bio-300 text-xs"
+                          >
+                            DOI ↗
+                          </a>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </section>
+            )}
+          </article>
+
+          <aside className="space-y-6">
+            <TransparencyPanel article={article} />
+            {scores.length > 0 && (
+              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-elevated)' }}>
+                <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                  Evidence strength
+                </h3>
+                <EvidenceScores scores={scores} />
               </div>
-            </Link>
-          ))}
+            )}
+          </aside>
         </div>
-      </section>
-
-      {/* Recent articles */}
-      {recentArticles.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pb-16">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-lg font-semibold" style={{ color: 'var(--color-text-primary)' }}>
-              Recently generated
-            </h2>
-            <Link href="/articles" className="text-sm text-bio-400 hover:text-bio-300 transition-colors">
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {recentArticles.map((article) => (
-              <ArticleCard key={article.id} article={article} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Footer */}
-      <footer className="border-t py-8 text-center text-xs" style={{ borderColor: 'var(--color-border)', color: 'var(--color-text-muted)' }}>
-        BioWiki · AI-generated from peer-reviewed research · Not medical advice
-      </footer>
+      </main>
     </div>
   )
 }
