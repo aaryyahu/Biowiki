@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── Design tokens ─────────────────────────────────────────────────────── */
+:root {
+  --color-primary:     #1D9E75;
+  --color-primary-dim: #0f6e50;
+  --color-primary-glow: rgba(29, 158, 117, 0.15);
+
+  --color-bg:          #0a0909;
+  --color-bg-surface:  #131210;
+  --color-bg-elevated: #1a1917;
+  --color-bg-card:     #1e1d19;
+
+  --color-text-primary:   #f0efeb;
+  --color-text-secondary: #9a9890;
+  --color-text-muted:     #5c5b56;
+
+  --color-border:       rgba(255,255,255,0.07);
+  --color-border-hover: rgba(255,255,255,0.13);
+  --color-border-focus: rgba(29, 158, 117, 0.5);
+
+  --radius-sm:  6px;
+  --radius-md:  10px;
+  --radius-lg:  14px;
+  --radius-xl:  20px;
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────── */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-feature-settings: 'kern' 1, 'liga' 1, 'calt' 1;
+}
+
+/* ── Scrollbar ─────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-border-hover); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--color-text-muted); }
+
+/* ── Selection ─────────────────────────────────────────────────────────── */
+::selection {
+  background: var(--color-primary-glow);
+  color: var(--color-text-primary);
+}
+
+/* ── Focus ─────────────────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Typography ────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+/* ── Components ────────────────────────────────────────────────────────── */
+@layer components {
+  /* Card */
+  .card {
+    @apply rounded-xl border bg-[var(--color-bg-card)];
+    border-color: var(--color-border);
+  }
+  .card:hover {
+    border-color: var(--color-border-hover);
+  }
+
+  /* Bio badge */
+  .badge {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium;
+  }
+
+  /* Input */
+  .input {
+    @apply w-full rounded-lg border bg-[var(--color-bg-elevated)] px-3 py-2 text-sm
+           placeholder:text-[var(--color-text-muted)]
+           focus:border-[var(--color-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--color-primary)];
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  /* Button variants */
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-medium
+           transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-primary {
+    @apply btn bg-bio-400 text-white hover:bg-bio-500 active:scale-[0.98];
+  }
+  .btn-secondary {
+    @apply btn border bg-transparent hover:bg-[var(--color-bg-elevated)] active:scale-[0.98];
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+  }
+  .btn-ghost {
+    @apply btn bg-transparent hover:bg-[var(--color-bg-elevated)];
+    color: var(--color-text-secondary);
+  }
+
+  /* Evidence bar */
+  .evidence-bar {
+    @apply h-1.5 w-full rounded-full overflow-hidden;
+    background: var(--color-border);
+  }
+  .evidence-fill {
+    @apply h-full rounded-full transition-all duration-500;
+  }
+
+  /* Grid background */
+  .grid-bg {
+    background-image: var(--tw-gradient-stops, none),
+      linear-gradient(rgba(29,158,117,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(29,158,117,0.04) 1px, transparent 1px);
+    background-size: auto, 32px 32px, 32px 32px;
+  }
+
+  /* Glow dot */
+  .glow-dot::before {
+    content: '';
+    @apply absolute inset-0 rounded-full;
+    background: var(--color-primary);
+    filter: blur(12px);
+    opacity: 0.3;
+  }
+}
+
+/* ── Prose overrides ───────────────────────────────────────────────────── */
+.article-content h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 0.75rem;
+  color: var(--color-text-primary);
+  border-bottom: 1px solid var(--color-border);
+  padding-bottom: 0.5rem;
+}
+
+.article-content h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+}
+
+.article-content p {
+  line-height: 1.75;
+  margin-bottom: 1rem;
+  color: var(--color-text-secondary);
+}
+
+.article-content sup {
+  color: var(--color-primary);
+  font-size: 0.7em;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.article-content sup:hover {
+  text-decoration: underline;
+}
+
+/* ── Animations ────────────────────────────────────────────────────────── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-bg-elevated) 25%,
+    var(--color-bg-card) 50%,
+    var(--color-bg-elevated) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
