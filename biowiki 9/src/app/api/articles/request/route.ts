@@ -1,29 +1,35 @@
-import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import type { ArticleCategory } from '@/types'
+import { NextResponse }      from 'next/server'
+import { createClient }      from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 
-export async function POST(request: Request) {
-  const { topic, category, requester_email } = await request.json() as {
-    topic: string
-    category: ArticleCategory
-    requester_email: string | null
-  }
-
-  if (!topic?.trim()) {
-    return NextResponse.json({ message: 'Topic is required' }, { status: 400 })
-  }
-
+export async function PATCH(
+  request: Request,
+  { params }: { params: { id: string } },
+) {
   const supabase = createClient()
-  const { error } = await supabase.from('topic_requests').insert({
-    topic: topic.trim(),
-    category,
-    requester_email: requester_email || null,
-    status: 'pending',
-  })
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 
-  if (error) {
-    return NextResponse.json({ message: 'Failed to save request' }, { status: 500 })
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim())
+  const isAdmin = adminEmails.includes(user.email ?? '') || user.app_metadata?.role === 'admin'
+  if (!isAdmin) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
+
+  const body  = await request.json() as Record<string, unknown>
+  const admin = createAdminClient()
+
+  const allowed = ['status', 'title', 'summary'] as const
+  const update: Record<string, unknown> = { updated_at: new Date().toISOString() }
+
+  for (const key of allowed) {
+    if (key in body) update[key] = body[key]
   }
 
-  return NextResponse.json({ message: 'Request submitted' })
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any)
+    .from('articles')
+    .update(update)
+    .eq('id', params.id)
+
+  if (error) return NextResponse.json({ message: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
 }
