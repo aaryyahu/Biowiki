@@ -5,16 +5,25 @@ import RequestActions          from './RequestActions'
 import type { Metadata }       from 'next'
 
 export const metadata: Metadata = { title: 'Topic requests' }
-
 export const revalidate = 0
 
-async function getRequests() {
+interface RequestRow {
+  id: string
+  topic: string
+  category: string
+  requester_email: string | null
+  status: string
+  created_at: string
+  notes: string | null
+}
+
+async function getRequests(): Promise<RequestRow[]> {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('topic_requests')
     .select('*')
     .order('created_at', { ascending: false })
-  return data ?? []
+  return (data ?? []) as RequestRow[]
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -26,7 +35,7 @@ const STATUS_STYLES: Record<string, string> = {
 
 export default async function RequestsPage() {
   const requests = await getRequests()
-  const pending  = requests.filter(r => r.status === 'pending').length
+  const pending  = requests.filter((r: RequestRow) => r.status === 'pending').length
 
   return (
     <div className="p-8">
@@ -59,9 +68,9 @@ export default async function RequestsPage() {
                 ))}
               </tr>
             </thead>
-            <tbody className="divide-y" style={{ '--tw-divide-opacity': 1 } as React.CSSProperties}>
-              {requests.map(req => (
-                <tr key={req.id} style={{ borderColor: 'var(--color-border)' }}>
+            <tbody>
+              {requests.map((req: RequestRow) => (
+                <tr key={req.id} className="border-b" style={{ borderColor: 'var(--color-border)' }}>
                   <td className="px-5 py-3.5 font-medium" style={{ color: 'var(--color-text-primary)' }}>
                     {req.topic}
                   </td>
@@ -82,7 +91,7 @@ export default async function RequestsPage() {
                     {formatRelativeDate(req.created_at)}
                   </td>
                   <td className="px-5 py-3.5">
-                    <RequestActions request={req} />
+                    <RequestActions request={req as any} />
                   </td>
                 </tr>
               ))}
