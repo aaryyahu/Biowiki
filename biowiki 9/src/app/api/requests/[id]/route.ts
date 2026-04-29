@@ -1,5 +1,5 @@
-import { NextResponse }    from 'next/server'
-import { createClient }    from '@/lib/supabase/server'
+import { NextResponse }      from 'next/server'
+import { createClient }      from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/server'
 
 export async function PATCH(
@@ -10,7 +10,7 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim())
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim())
   const isAdmin = adminEmails.includes(user.email ?? '') || user.app_metadata?.role === 'admin'
   if (!isAdmin) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
@@ -25,7 +25,8 @@ export async function PATCH(
   if (notes)  update.notes  = notes
 
   const admin = createAdminClient()
-  const { error } = await admin
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any)
     .from('topic_requests')
     .update(update)
     .eq('id', params.id)
