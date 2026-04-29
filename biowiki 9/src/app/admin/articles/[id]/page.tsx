@@ -47,11 +47,13 @@ export default async function AdminArticlePage({ params }: PageProps) {
     getPapers(article.topic),
   ])
 
-  const statusColor = {
+  const statusStyles: Record<string, string> = {
     draft:     'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300',
     published: 'bg-bio-100 text-bio-800 dark:bg-bio-900/30 dark:text-bio-300',
     archived:  'bg-gray-100 text-gray-600',
-  }[article.status]
+  }
+
+  const statusColor = statusStyles[article.status as string] ?? ''
 
   return (
     <div className="p-8 max-w-5xl">
@@ -85,7 +87,6 @@ export default async function AdminArticlePage({ params }: PageProps) {
           </div>
         </div>
 
-        {/* Actions */}
         <AdminArticleActions article={article} />
       </div>
 
@@ -110,7 +111,6 @@ export default async function AdminArticlePage({ params }: PageProps) {
             </div>
           )}
 
-          {/* References */}
           {papers.length > 0 && (
             <div className="card p-5 mt-4">
               <h3 className="text-sm font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
@@ -129,10 +129,9 @@ export default async function AdminArticlePage({ params }: PageProps) {
                       )}
                       {p.journal && <span style={{ color: 'var(--color-text-muted)' }}> {p.journal}.</span>}
                       {p.published_year && <span style={{ color: 'var(--color-text-muted)' }}> {p.published_year}.</span>}
-                      <span style={{ color: 'var(--color-text-muted)' }}> {p.citation_count} citations.</span>
                       {p.doi && (
                         <a href={`https://doi.org/${p.doi}`} target="_blank" rel="noopener noreferrer"
-                          className="ml-1 text-bio-400 hover:text-bio-300 text-xs">DOI ↗</a>
+                          className="ml-1 text-bio-400 hover:text-bio-300">DOI ↗</a>
                       )}
                     </div>
                   </li>
@@ -144,19 +143,18 @@ export default async function AdminArticlePage({ params }: PageProps) {
 
         {/* Sidebar */}
         <aside className="space-y-4">
-          {/* Meta */}
           <div className="card p-4">
             <h3 className="text-sm font-medium mb-3" style={{ color: 'var(--color-text-primary)' }}>
               Article metadata
             </h3>
             <div className="space-y-2">
               {[
-                { label: 'Topic',     value: article.topic },
-                { label: 'Slug',      value: article.slug },
-                { label: 'Model',     value: article.generation_model },
-                { label: 'Version',   value: article.pipeline_version },
-                { label: 'Papers',    value: String(article.papers_count) },
-                { label: 'Created',   value: formatDate(article.created_at) },
+                { label: 'Topic',   value: article.topic },
+                { label: 'Slug',    value: article.slug },
+                { label: 'Model',   value: article.generation_model },
+                { label: 'Version', value: article.pipeline_version },
+                { label: 'Papers',  value: String(article.papers_count) },
+                { label: 'Created', value: formatDate(article.created_at) },
               ].map(({ label, value }) => (
                 <div key={label} className="flex justify-between gap-2 text-xs">
                   <span style={{ color: 'var(--color-text-muted)' }}>{label}</span>
@@ -166,7 +164,6 @@ export default async function AdminArticlePage({ params }: PageProps) {
             </div>
           </div>
 
-          {/* Evidence scores */}
           {scores.length > 0 && (
             <div className="card p-4">
               <h3 className="text-sm font-medium mb-4" style={{ color: 'var(--color-text-primary)' }}>
