@@ -4,28 +4,35 @@ import { embedArticle, embedAllPending } from '@/lib/pipeline/embed'
 
 export const maxDuration = 120
 
+interface ArticleRow {
+  id: string
+  title: string
+  summary: string
+  content: string | null
+}
+
 export async function POST(request: Request) {
   // Auth
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
 
-  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim())
+  const adminEmails = (process.env.ADMIN_EMAILS || '').split(',').map((e: string) => e.trim())
   const isAdmin = adminEmails.includes(user.email ?? '') || user.app_metadata?.role === 'admin'
   if (!isAdmin) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
   const body = await request.json().catch(() => ({})) as {
-    articleId?: string   // embed one specific article
-    all?:       boolean  // embed all pending articles
+    articleId?: string
+    all?:       boolean
   }
 
   if (body.articleId) {
-    // Embed a single article
-    const { data: article } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: article } = await (supabase as any)
       .from('articles')
       .select('id, title, summary, content')
       .eq('id', body.articleId)
-      .single()
+      .single() as { data: ArticleRow | null }
 
     if (!article) return NextResponse.json({ message: 'Article not found' }, { status: 404 })
 
