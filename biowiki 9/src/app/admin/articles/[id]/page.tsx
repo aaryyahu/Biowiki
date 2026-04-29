@@ -117,7 +117,7 @@ export default async function AdminArticlePage({ params }: PageProps) {
                 Source papers ({papers.length})
               </h3>
               <ol className="space-y-2">
-                {papers.map((p, i) => (
+                {papers.map((p: { id: string; title: string; authors: string[]; journal: string | null; published_year: number | null; doi: string | null }, i: number) => (
                   <li key={p.id} className="flex gap-3 text-xs">
                     <span className="shrink-0 font-mono text-bio-400 mt-0.5">[{i + 1}]</span>
                     <div>
