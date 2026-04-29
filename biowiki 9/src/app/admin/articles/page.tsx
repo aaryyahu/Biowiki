@@ -7,13 +7,25 @@ import type { Metadata }  from 'next'
 export const metadata: Metadata = { title: 'Articles' }
 export const revalidate = 0
 
-async function getArticles() {
+interface ArticleRow {
+  id: string
+  slug: string
+  title: string
+  category: string
+  status: string
+  papers_count: number
+  hallucination_check_passed: boolean | null
+  updated_at: string
+  created_at: string
+}
+
+async function getArticles(): Promise<ArticleRow[]> {
   const supabase = createAdminClient()
   const { data } = await supabase
     .from('articles')
     .select('id, slug, title, category, status, papers_count, hallucination_check_passed, updated_at, created_at')
     .order('updated_at', { ascending: false })
-  return data ?? []
+  return (data ?? []) as ArticleRow[]
 }
 
 const STATUS_STYLES: Record<string, string> = {
@@ -26,8 +38,8 @@ export default async function AdminArticlesPage() {
   const articles = await getArticles()
   const counts = {
     total:     articles.length,
-    published: articles.filter(a => a.status === 'published').length,
-    draft:     articles.filter(a => a.status === 'draft').length,
+    published: articles.filter((a: ArticleRow) => a.status === 'published').length,
+    draft:     articles.filter((a: ArticleRow) => a.status === 'draft').length,
   }
 
   return (
@@ -74,7 +86,7 @@ export default async function AdminArticlesPage() {
               </tr>
             </thead>
             <tbody>
-              {articles.map(article => (
+              {articles.map((article: ArticleRow) => (
                 <tr
                   key={article.id}
                   className="border-b transition-colors hover:bg-white/3"
@@ -93,7 +105,7 @@ export default async function AdminArticlesPage() {
                     </span>
                   </td>
                   <td className="px-4 py-3">
-                    <CategoryBadge category={article.category} />
+                    <CategoryBadge category={article.category as any} />
                   </td>
                   <td className="px-4 py-3">
                     <span className={`badge text-xs ${STATUS_STYLES[article.status] ?? ''}`}>
