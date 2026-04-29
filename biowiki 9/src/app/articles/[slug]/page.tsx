@@ -1,12 +1,12 @@
-import { notFound } from 'next/navigation'
-import type { Metadata } from 'next'
-import Script from 'next/script'
-import { Nav } from '@/components/layout/Nav'
-import { CategoryBadge } from '@/components/ui/CategoryBadge'
-import { EvidenceScores } from '@/components/article/EvidenceScores'
+import { notFound }        from 'next/navigation'
+import type { Metadata }   from 'next'
+import Script              from 'next/script'
+import { Nav }             from '@/components/layout/Nav'
+import { CategoryBadge }   from '@/components/ui/CategoryBadge'
+import { EvidenceScores }  from '@/components/article/EvidenceScores'
 import { TransparencyPanel } from '@/components/article/TransparencyPanel'
-import { createClient } from '@/lib/supabase/server'
-import { formatDate } from '@/lib/utils'
+import { createClient }    from '@/lib/supabase/server'
+import { formatDate }      from '@/lib/utils'
 
 interface PageProps {
   params: { slug: string }
@@ -54,10 +54,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title:       article.title,
     description: article.summary,
     openGraph: {
-      title:       article.title,
-      description: article.summary,
-      url:         `${appUrl}/articles/${article.slug}`,
-      type:        'article',
+      title:         article.title,
+      description:   article.summary,
+      url:           `${appUrl}/articles/${article.slug}`,
+      type:          'article',
       publishedTime: article.created_at,
       modifiedTime:  article.updated_at,
     },
@@ -78,7 +78,6 @@ export default async function ArticlePage({ params }: PageProps) {
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
 
-  // JSON-LD structured data
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type':    'MedicalWebPage',
@@ -91,23 +90,6 @@ export default async function ArticlePage({ params }: PageProps) {
       '@type': 'Organization',
       name:    'BioWiki',
       url:     appUrl,
-    },
-    citation: papers.slice(0, 5).map(p => ({
-      '@type':  'ScholarlyArticle',
-      name:     p.title,
-      author:   p.authors?.slice(0, 3).map(a => ({ '@type': 'Person', name: a })),
-      isPartOf: p.journal ? { '@type': 'Periodical', name: p.journal } : undefined,
-      datePublished: p.published_year ? String(p.published_year) : undefined,
-      identifier:    p.doi ? `https://doi.org/${p.doi}` : undefined,
-    })),
-    about: {
-      '@type': 'MedicalCondition',
-      name:    article.topic,
-    },
-    reviewedBy: {
-      '@type': 'SoftwareApplication',
-      name:    'Claude AI',
-      url:     'https://anthropic.com',
     },
   }
 
@@ -122,7 +104,6 @@ export default async function ArticlePage({ params }: PageProps) {
       <main className="mx-auto max-w-6xl px-4 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
 
-          {/* Article body */}
           <article>
             <header className="mb-8">
               <CategoryBadge category={article.category} className="mb-4" />
@@ -146,7 +127,6 @@ export default async function ArticlePage({ params }: PageProps) {
               dangerouslySetInnerHTML={{ __html: article.content }}
             />
 
-            {/* References */}
             {papers.length > 0 && (
               <section className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--color-border)' }}>
                 <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
@@ -187,7 +167,6 @@ export default async function ArticlePage({ params }: PageProps) {
             )}
           </article>
 
-          {/* Sidebar */}
           <aside className="space-y-6">
             <TransparencyPanel article={article} />
             {scores.length > 0 && (
@@ -204,7 +183,3 @@ export default async function ArticlePage({ params }: PageProps) {
     </div>
   )
 }
-
-export default async function ArticlePage({ params }: PageProps) {
-  const article = await getArticle(params.slug)
-  if (!article) notFound()
