@@ -14,8 +14,10 @@ export async function PATCH(
   const isAdmin = adminEmails.includes(user.email ?? '') || user.app_metadata?.role === 'admin'
   if (!isAdmin) return NextResponse.json({ message: 'Forbidden' }, { status: 403 })
 
-  const { status, notes } = await request.json() as { status?: string; notes?: string }
-  const validStatuses = ['pending', 'approved', 'rejected', 'generated']
+  const body = await request.json() as { status?: string; notes?: string }
+  const { status, notes } = body
+
+  const validStatuses = ['draft', 'published', 'archived']
   if (status && !validStatuses.includes(status)) {
     return NextResponse.json({ message: 'Invalid status' }, { status: 400 })
   }
@@ -24,10 +26,10 @@ export async function PATCH(
   if (status) update.status = status
   if (notes)  update.notes  = notes
 
-  const admin = createAdminClient()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { error } = await (admin as any)
-    .from('topic_requests')
+  const admin = createAdminClient() as any
+  const { error } = await admin
+    .from('articles')
     .update(update)
     .eq('id', params.id)
 
