@@ -151,7 +151,9 @@ export async function embedArticle(
   summary:   string,
 ): Promise<EmbedResult> {
   const result: EmbedResult = { articleId, chunksCreated: 0, errors: [] }
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
 
   // Build plain text: prepend title + summary so they're always represented
   const plainText = `${title}\n\n${summary}\n\n${htmlToPlainText(content)}`
@@ -217,7 +219,9 @@ export async function embedAllPending(): Promise<{
   processed: number
   errors:    string[]
 }> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
   const errors:  string[] = []
 
   // Articles that exist but have no embedding rows

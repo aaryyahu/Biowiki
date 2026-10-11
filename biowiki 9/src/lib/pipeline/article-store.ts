@@ -25,7 +25,9 @@ export async function storeArticleContent(
   hallucinationCheckPassed: boolean | null,
   autoPublish:             boolean = false,
 ): Promise<ArticleStoreResult> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
   const errors:  string[] = []
 
   const { error } = await supabase
@@ -56,7 +58,9 @@ export async function storeArticleContent(
  * Publish a draft article (set status = 'published').
  */
 export async function publishArticle(articleId: string): Promise<void> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
   await supabase
     .from('articles')
     .update({ status: 'published', updated_at: new Date().toISOString() })

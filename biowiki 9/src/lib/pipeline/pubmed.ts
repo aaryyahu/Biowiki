@@ -241,7 +241,9 @@ export async function ingestTopic(
   }
 
   // 3. Parse + upsert
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
 
   for (const article of articles) {
     try {

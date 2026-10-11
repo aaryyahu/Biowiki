@@ -107,7 +107,9 @@ export interface EnrichResult {
  */
 export async function enrichTopic(topic: string): Promise<EnrichResult> {
   const result: EnrichResult = { topic, processed: 0, enriched: 0, errors: [] }
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
 
   // Fetch papers that haven't been enriched yet (citation_count = 0)
   const { data: papers, error } = await supabase

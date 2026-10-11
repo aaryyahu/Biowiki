@@ -49,7 +49,9 @@ export async function searchChunks(
   matchThreshold: number = 0.5,
 ): Promise<SearchResult[]> {
   const queryVector = await embedQuery(query)
-  const supabase    = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase    = createAdminClient() as any
 
   // Call the pgvector match function defined in the migration
   const { data, error } = await supabase.rpc('match_embeddings', {
@@ -117,7 +119,9 @@ export function dedupeToArticles(chunks: SearchResult[]): ArticleSearchResult[] 
  * Used when no embeddings exist yet for a topic.
  */
 export async function textSearch(query: string, limit = 8): Promise<ArticleSearchResult[]> {
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createClient() as any
 
   const { data } = await supabase
     .from('articles')

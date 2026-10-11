@@ -9,16 +9,20 @@ import { createAdminClient } from '@/lib/supabase/server'
 
 export class PipelineLogger {
   private runId: string
-  private supabase: ReturnType<typeof createAdminClient>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private supabase: any
 
   private constructor(runId: string) {
     this.runId    = runId
-    this.supabase = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    this.supabase = createAdminClient() as any
   }
 
   /** Create a new run record and return a logger bound to it */
   static async start(topic: string, version = '1.0.0'): Promise<PipelineLogger> {
-    const supabase = createAdminClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+    const supabase = createAdminClient() as any
     const { data, error } = await supabase
       .from('pipeline_runs')
       .insert({

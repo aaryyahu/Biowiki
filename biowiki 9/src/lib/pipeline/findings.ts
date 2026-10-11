@@ -13,7 +13,9 @@ import type { ExtractionInput, FindingInsert } from './extract'
  * This lets the extraction step be safely re-run — it only processes new papers.
  */
 export async function getUnprocessedPapers(topic: string): Promise<ExtractionInput[]> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
 
   // Get all paper IDs that already have findings
   const { data: existingFindings } = await supabase
@@ -47,7 +49,10 @@ export async function storeFindingsBatch(findings: FindingInsert[]): Promise<{
 }> {
   if (findings.length === 0) return { stored: 0, errors: [] }
 
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+
+  const supabase = createAdminClient() as any
   const errors:  string[] = []
   let   stored = 0
 
@@ -74,7 +79,9 @@ export async function storeFindingsBatch(findings: FindingInsert[]): Promise<{
  * Fetch all findings for a topic (for synthesis step).
  */
 export async function getTopicFindings(topic: string) {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
 
   const { data, error } = await supabase
     .from('findings')

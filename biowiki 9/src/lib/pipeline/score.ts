@@ -316,7 +316,10 @@ export async function storeEvidenceScores(
 ): Promise<{ stored: number; errors: string[] }> {
   if (scores.length === 0) return { stored: 0, errors: [] }
 
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+
+  const supabase = createAdminClient() as any
   const errors:  string[] = []
 
   // Delete old scores for this article

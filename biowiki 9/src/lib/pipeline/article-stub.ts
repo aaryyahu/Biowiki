@@ -20,7 +20,9 @@ export async function getOrCreateArticleStub(
   category: ArticleCategory,
   papersCount: number,
 ): Promise<string> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+
+  const supabase = createAdminClient() as any
   const slug     = slugify(topic)
 
   // Check if article already exists for this topic
