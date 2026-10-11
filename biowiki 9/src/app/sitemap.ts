@@ -5,7 +5,8 @@ export const revalidate = 3600 // regenerate every hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
 
   const { data: articles } = await supabase
     .from('articles')

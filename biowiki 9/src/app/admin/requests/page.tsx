@@ -18,7 +18,8 @@ interface RequestRow {
 }
 
 async function getRequests(): Promise<RequestRow[]> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const { data } = await supabase
     .from('topic_requests')
     .select('*')

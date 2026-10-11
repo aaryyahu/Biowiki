@@ -11,7 +11,8 @@ interface PageProps {
 }
 
 export default async function ArticlesPage({ searchParams }: PageProps) {
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
   const category = searchParams.category as ArticleCategory | undefined
 
   let query = supabase

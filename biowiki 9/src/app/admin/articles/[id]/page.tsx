@@ -8,7 +8,8 @@ import AdminArticleActions   from './AdminArticleActions'
 interface PageProps { params: { id: string } }
 
 async function getArticle(id: string) {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const { data } = await supabase
     .from('articles')
     .select('*')
@@ -18,7 +19,8 @@ async function getArticle(id: string) {
 }
 
 async function getScores(articleId: string) {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const { data } = await supabase
     .from('evidence_scores')
     .select('*')
@@ -28,7 +30,8 @@ async function getScores(articleId: string) {
 }
 
 async function getPapers(topic: string) {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const { data } = await supabase
     .from('papers')
     .select('id, title, authors, journal, published_year, doi, citation_count')

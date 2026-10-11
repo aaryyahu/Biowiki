@@ -20,7 +20,8 @@ interface ArticleRow {
 }
 
 async function getArticles(): Promise<ArticleRow[]> {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const { data } = await supabase
     .from('articles')
     .select('id, slug, title, category, status, papers_count, hallucination_check_passed, updated_at, created_at')

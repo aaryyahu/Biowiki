@@ -1,184 +1,108 @@
-import { notFound }        from 'next/navigation'
-import type { Metadata }   from 'next'
-import Script              from 'next/script'
-import { Nav }             from '@/components/layout/Nav'
-import { CategoryBadge }   from '@/components/ui/CategoryBadge'
-import { EvidenceScores }  from '@/components/article/EvidenceScores'
-import { TransparencyPanel } from '@/components/article/TransparencyPanel'
-import { createClient }    from '@/lib/supabase/server'
-import { formatDate }      from '@/lib/utils'
+import Link            from 'next/link'
+import { Nav }         from '@/components/layout/Nav'
+import { ArticleCard } from '@/components/article/ArticleCard'
+import { createClient } from '@/lib/supabase/server'
+import { CATEGORY_LABELS, type ArticleCategory } from '@/types'
+import type { Metadata } from 'next'
 
-interface PageProps {
-  params: { slug: string }
+export const metadata: Metadata = {
+  title:       'BioWiki — AI-powered biohacking research',
+  description: 'Evidence-based articles on biohacking, longevity, and performance, synthesized from peer-reviewed research.',
 }
 
-async function getArticle(slug: string) {
-  const supabase = createClient()
-  const { data } = await supabase
+export const revalidate = 3600
+
+export default async function HomePage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
+
+  const { data: featuredArticles } = await supabase
     .from('articles')
     .select('*')
-    .eq('slug', slug)
     .eq('status', 'published')
-    .single()
-  return data
-}
+    .order('updated_at', { ascending: false })
+    .limit(6)
 
-async function getEvidenceScores(articleId: string) {
-  const supabase = createClient()
-  const { data } = await supabase
-    .from('evidence_scores')
-    .select('*')
-    .eq('article_id', articleId)
-    .order('score', { ascending: false })
-  return data ?? []
-}
+  const articles = (featuredArticles ?? []) as Array<{
+    id: string; title: string; slug: string; summary: string
+    category: string; papers_count: number; updated_at: string
+  }>
 
-async function getPapers(topic: string) {
-  const supabase = createClient()
-  const { data } = await supabase
-    .from('papers')
-    .select('id, title, authors, journal, published_year, doi')
-    .eq('topic', topic)
-    .order('citation_count', { ascending: false })
-    .limit(20)
-  return data ?? []
-}
-
-export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const article = await getArticle(params.slug)
-  if (!article) return { title: 'Not found' }
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
-
-  return {
-    title:       article.title,
-    description: article.summary,
-    openGraph: {
-      title:         article.title,
-      description:   article.summary,
-      url:           `${appUrl}/articles/${article.slug}`,
-      type:          'article',
-      publishedTime: article.created_at,
-      modifiedTime:  article.updated_at,
-    },
-    alternates: {
-      canonical: `${appUrl}/articles/${article.slug}`,
-    },
-  }
-}
-
-export default async function ArticlePage({ params }: PageProps) {
-  const article = await getArticle(params.slug)
-  if (!article) notFound()
-
-  const [scores, papers] = await Promise.all([
-    getEvidenceScores(article.id),
-    getPapers(article.topic),
-  ])
-
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://biowiki.app'
-
-  const jsonLd = {
-    '@context': 'https://schema.org',
-    '@type':    'MedicalWebPage',
-    name:       article.title,
-    description: article.summary,
-    url:         `${appUrl}/articles/${article.slug}`,
-    datePublished: article.created_at,
-    dateModified:  article.updated_at,
-    publisher: {
-      '@type': 'Organization',
-      name:    'BioWiki',
-      url:     appUrl,
-    },
-  }
+  const categories = Object.keys(CATEGORY_LABELS) as ArticleCategory[]
 
   return (
     <div className="min-h-screen">
-      <Script
-        id="article-jsonld"
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
       <Nav />
-      <main className="mx-auto max-w-6xl px-4 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-10">
+      <main>
+        {/* Hero */}
+        <section className="mx-auto max-w-4xl px-4 py-20 text-center">
+          <h1 className="text-4xl sm:text-5xl font-bold tracking-tight mb-6"
+            style={{ color: 'var(--color-text-primary)' }}>
+            Science-backed biohacking,<br />
+            <span className="text-bio-400">synthesized by AI</span>
+          </h1>
+          <p className="text-lg max-w-2xl mx-auto mb-8"
+            style={{ color: 'var(--color-text-secondary)' }}>
+            Every article is generated from peer-reviewed research and updated weekly.
+            No bro-science. No anecdotes. Just evidence.
+          </p>
+          <div className="flex gap-3 justify-center flex-wrap">
+            <Link href="/articles" className="btn-primary px-6 py-2.5">
+              Browse articles
+            </Link>
+            <Link href="/ask" className="btn-secondary px-6 py-2.5">
+              Ask anything
+            </Link>
+          </div>
+        </section>
 
-          <article>
-            <header className="mb-8">
-              <CategoryBadge category={article.category} className="mb-4" />
-              <h1 className="text-3xl font-bold tracking-tight mb-3" style={{ color: 'var(--color-text-primary)' }}>
-                {article.title}
-              </h1>
-              <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-                {article.summary}
+        {/* Categories */}
+        <section className="mx-auto max-w-6xl px-4 pb-10">
+          <div className="flex gap-2 flex-wrap justify-center">
+            {categories.map(cat => (
+              <Link key={cat} href={`/articles?category=${cat}`}
+                className="badge text-xs px-3 py-1.5 rounded-full border transition-colors
+                  border-[var(--color-border)] text-[var(--color-text-secondary)]
+                  hover:border-bio-400 hover:text-bio-400">
+                {CATEGORY_LABELS[cat]}
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* Featured articles */}
+        {articles.length > 0 && (
+          <section className="mx-auto max-w-6xl px-4 pb-20">
+            <h2 className="text-lg font-semibold mb-6"
+              style={{ color: 'var(--color-text-primary)' }}>
+              Latest articles
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {articles.map(article => (
+                <ArticleCard key={article.id} article={article as any} />
+              ))}
+            </div>
+            <div className="mt-8 text-center">
+              <Link href="/articles" className="btn-secondary px-6 py-2.5">
+                View all articles →
+              </Link>
+            </div>
+          </section>
+        )}
+
+        {articles.length === 0 && (
+          <section className="mx-auto max-w-6xl px-4 pb-20 text-center">
+            <div className="card p-16">
+              <div className="text-4xl mb-4">🔬</div>
+              <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                No articles published yet.
               </p>
-              <div className="flex items-center gap-3 text-xs" style={{ color: 'var(--color-text-muted)' }}>
-                <span>Updated {formatDate(article.updated_at)}</span>
-                <span>·</span>
-                <span>{article.papers_count} source papers</span>
-                <span>·</span>
-                <span>AI-generated</span>
-              </div>
-            </header>
-
-            <div
-              className="article-content"
-              dangerouslySetInnerHTML={{ __html: article.content }}
-            />
-
-            {papers.length > 0 && (
-              <section className="mt-12 pt-8 border-t" style={{ borderColor: 'var(--color-border)' }}>
-                <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-                  References
-                </h2>
-                <ol className="space-y-3">
-                  {papers.map((paper, i) => (
-                    <li key={paper.id} className="flex gap-3 text-sm">
-                      <span className="shrink-0 font-mono text-bio-400 text-xs mt-0.5">[{i + 1}]</span>
-                      <div>
-                        <span style={{ color: 'var(--color-text-secondary)' }}>{paper.title}.</span>
-                        {paper.authors?.length > 0 && (
-                          <span style={{ color: 'var(--color-text-muted)' }}>
-                            {' '}{paper.authors.slice(0, 3).join(', ')}{paper.authors.length > 3 ? ' et al.' : ''}.
-                          </span>
-                        )}
-                        {paper.journal && (
-                          <span style={{ color: 'var(--color-text-muted)' }}> {paper.journal}.</span>
-                        )}
-                        {paper.published_year && (
-                          <span style={{ color: 'var(--color-text-muted)' }}> {paper.published_year}.</span>
-                        )}
-                        {paper.doi && (
-                          <a
-                            href={`https://doi.org/${paper.doi}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ml-1 text-bio-400 hover:text-bio-300 text-xs"
-                          >
-                            DOI ↗
-                          </a>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ol>
-              </section>
-            )}
-          </article>
-
-          <aside className="space-y-6">
-            <TransparencyPanel article={article} />
-            {scores.length > 0 && (
-              <div className="rounded-xl border p-4" style={{ borderColor: 'var(--color-border)', background: 'var(--color-bg-elevated)' }}>
-                <h3 className="text-sm font-semibold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-                  Evidence strength
-                </h3>
-                <EvidenceScores scores={scores} />
-              </div>
-            )}
-          </aside>
-        </div>
+              <Link href="/request" className="btn-primary text-sm px-4 py-2 mt-4 inline-block">
+                Request the first topic
+              </Link>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   )

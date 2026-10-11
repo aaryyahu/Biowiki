@@ -18,7 +18,8 @@ interface RunRow {
 interface RequestRow { id: string; status: string }
 
 async function getAdminStats() {
-  const supabase = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createAdminClient() as any
   const [
     articlesRes, papersRes, findingsRes,
     embeddingsRes, runsRes, requestsRes,
