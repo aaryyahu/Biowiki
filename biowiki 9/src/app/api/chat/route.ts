@@ -49,7 +49,7 @@ export async function POST(request: Request) {
       }
 
       const contextSections: string[] = []
-      for (const [, articleChunks] of byArticle) {
+      for (const [, articleChunks] of Array.from(byArticle)) {
         const { title, slug } = articleChunks[0]
         sources.push({ title, slug })
         const text = articleChunks.map(c => c.chunk_text).join('\n\n')
