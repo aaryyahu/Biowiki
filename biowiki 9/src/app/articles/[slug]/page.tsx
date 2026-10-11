@@ -13,18 +13,26 @@ interface PageProps {
 }
 
 async function getArticle(slug: string) {
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
   const { data } = await supabase
     .from('articles')
     .select('*')
     .eq('slug', slug)
     .eq('status', 'published')
     .single()
-  return data
+  return data as {
+    id: string; title: string; slug: string; summary: string; content: string
+    category: string; status: string; topic: string; papers_count: number
+    pipeline_version: string; generation_model: string
+    hallucination_check_passed: boolean | null
+    created_at: string; updated_at: string
+  } | null
 }
 
 async function getEvidenceScores(articleId: string) {
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
   const { data } = await supabase
     .from('evidence_scores')
     .select('*')
@@ -34,7 +42,8 @@ async function getEvidenceScores(articleId: string) {
 }
 
 async function getPapers(topic: string) {
-  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const supabase = createClient() as any
   const { data } = await supabase
     .from('papers')
     .select('id, title, authors, journal, published_year, doi')
